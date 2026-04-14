@@ -19,17 +19,17 @@ android {
             useSupportLibrary true
         }
         
-        manifestPlaceholders = [MAPS_API_KEY: "AIzaSyAp5R8IcE4bwmTbNPuoHw_tC-qsrOhS9ro"]
+        manifestPlaceholders = [MAPS_API_KEY: "YOUR_MAP_KEY"]
     }
 
     buildTypes {
         debug {
-            buildConfigField "String", "MAPS_API_KEY", "\"AIzaSyAp5R8IcE4bwmTbNPuoHw_tC-qsrOhS9ro\""
+            buildConfigField "String", "MAPS_API_KEY", "\"YOUR_MAP_KEY\""
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField "String", "MAPS_API_KEY", "\"AIzaSyAp5R8IcE4bwmTbNPuoHw_tC-qsrOhS9ro\""
+            buildConfigField "String", "MAPS_API_KEY", "\"YOUR_MAP_KEY\""
         }
     }
 
