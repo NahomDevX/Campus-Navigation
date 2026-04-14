@@ -39,7 +39,7 @@ Android mobile application in Java for Android Studio that provides:
 
 1. Open Android Studio.
 2. Choose `Open`.
-3. Select `C:\one drive document\OneDrive\Documents\New project`.
+3. Select `C:\one drive document\OneDrive\Documents\...`.
 4. Let Gradle sync finish.
 
 ### 2. Configure Google Maps
