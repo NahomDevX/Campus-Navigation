@@ -1,0 +1,34 @@
+[
+  {
+    "id": "orientation_2026",
+    "name": "Freshman Orientation",
+    "buildingId": "admin_block",
+    "buildingName": "Administration Block",
+    "eventTimeMillis": 1777626000000,
+    "description": "Orientation session for new students."
+  },
+  {
+    "id": "innovation_day",
+    "name": "Innovation Day Showcase",
+    "buildingId": "engineering_complex",
+    "buildingName": "Engineering Complex",
+    "eventTimeMillis": 1777813200000,
+    "description": "Student innovation exhibition and project demos."
+  },
+  {
+    "id": "library_workshop",
+    "name": "Research Skills Workshop",
+    "buildingId": "main_library",
+    "buildingName": "Main Library",
+    "eventTimeMillis": 1778225400000,
+    "description": "Digital library search and citation training."
+  },
+  {
+    "id": "career_fair",
+    "name": "Campus Career Fair",
+    "buildingId": "business_school",
+    "buildingName": "School of Business",
+    "eventTimeMillis": 1778839200000,
+    "description": "Employers, internship booths, and career advising."
+  }
+]

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">የካምፓስ ናቪጌሽን</string>
+    <string name="welcome_message">ካምፓስዎን በቀላሉ ያስሱ።</string>
+    <string name="sign_in">ግባ</string>
+    <string name="register">መመዝገብ</string>
+    <string name="continue_as_guest">እንደ እንግዳ ቀጥል</string>
+    <string name="map">ካርታ</string>
+    <string name="directory">ዝርዝር</string>
+    <string name="events">ክስተቶች</string>
+    <string name="settings">ቅንብሮች</string>
+    <string name="dashboard">ዋና ገጽ</string>
+    <string name="search_buildings">ሕንፃዎችን ይፈልጉ</string>
+    <string name="campus_events">የካምፓስ ክስተቶች</string>
+    <string name="offline_mode">ከመስመር ውጭ ሁኔታ</string>
+    <string name="my_location">የእኔ መገኛ</string>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.CampusNavigation" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/campus_primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimaryContainer">@color/campus_primary_dark</item>
+        <item name="colorSecondary">@color/campus_secondary</item>
+        <item name="colorSurface">@color/campus_surface</item>
+        <item name="android:statusBarColor">@color/campus_primary_dark</item>
+        <item name="android:navigationBarColor">@color/campus_surface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
+    </style>
+
+    <style name="Theme.CampusNavigation.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_splash</item>
+    </style>
+</resources>

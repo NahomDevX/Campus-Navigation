@@ -1,0 +1,56 @@
+[
+  {
+    "id": "admin_block",
+    "name": "Administration Block",
+    "description": "Central administration offices and student help desk.",
+    "type": "Building",
+    "latitude": 9.5934,
+    "longitude": 41.8656,
+    "favorite": false
+  },
+  {
+    "id": "engineering_complex",
+    "name": "Engineering Complex",
+    "description": "Lecture rooms, labs, and project spaces for engineering students.",
+    "type": "Department",
+    "latitude": 9.5925,
+    "longitude": 41.8674,
+    "favorite": false
+  },
+  {
+    "id": "main_library",
+    "name": "Main Library",
+    "description": "Library with reading halls, digital catalog, and study rooms.",
+    "type": "Library",
+    "latitude": 9.5941,
+    "longitude": 41.8669,
+    "favorite": false
+  },
+  {
+    "id": "student_cafe",
+    "name": "Student Cafeteria",
+    "description": "Affordable meals and drinks for students and staff.",
+    "type": "Cafeteria",
+    "latitude": 9.5918,
+    "longitude": 41.8652,
+    "favorite": false
+  },
+  {
+    "id": "ict_center",
+    "name": "ICT Center",
+    "description": "Campus digital services, Wi-Fi support, and computer labs.",
+    "type": "Department",
+    "latitude": 9.593,
+    "longitude": 41.8681,
+    "favorite": false
+  },
+  {
+    "id": "business_school",
+    "name": "School of Business",
+    "description": "Business and economics classrooms and academic offices.",
+    "type": "Building",
+    "latitude": 9.5948,
+    "longitude": 41.8648,
+    "favorite": false
+  }
+]
