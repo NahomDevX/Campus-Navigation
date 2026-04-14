@@ -17,7 +17,7 @@
     "longitude": 41.8674,
     "favorite": false
   },
-  {
+  { 
     "id": "main_library",
     "name": "Main Library",
     "description": "Library with reading halls, digital catalog, and study rooms.",
