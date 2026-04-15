@@ -19,7 +19,7 @@ android {
             useSupportLibrary true
         }
         
-        manifestPlaceholders = [MAPS_API_KEY: "YOUR_MAP_KEY"]
+        manifestPlaceholders = [MAPS_API_KEY: "YOUR_MAP_API_KEY"]
     }
 
     buildTypes {
