@@ -44,15 +44,19 @@ import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
     private static final String ARG_SELECTED_BUILDING_ID = "selected_building_id";
-    private static final LatLng DIRE_DAWA_CAMPUS = new LatLng(9.5931, 41.8661);
+    // Updated default map location
+    private static final LatLng DIRE_DAWA_CAMPUS = new LatLng(9.620186228099227, 41.84080857019687);
 
     private GoogleMap googleMap;
     private AutoCompleteTextView searchBar;
@@ -69,6 +73,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final List<Building> cachedBuildings = new ArrayList<>();
     private final List<CampusEvent> activeEvents = new ArrayList<>();
     private final List<Building> suggestionBuildings = new ArrayList<>();
+    private final Set<String> activeFilters = new HashSet<>();
     private ArrayAdapter<String> suggestionAdapter;
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> enableLocationIfPossible());
@@ -98,6 +103,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         routeInstructionsText = view.findViewById(R.id.routeInstructionsText);
         startRouteButton = view.findViewById(R.id.startRouteButton);
         myLocationFab = view.findViewById(R.id.myLocationFab);
+
+        setupFilters(view);
 
         suggestionAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, new ArrayList<>());
         searchBar.setAdapter(suggestionAdapter);
@@ -162,13 +169,33 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         });
     }
 
+    private void setupFilters(View view) {
+        Chip chipAcademic = view.findViewById(R.id.chipAcademic);
+        Chip chipLibrary = view.findViewById(R.id.chipLibrary);
+
+        activeFilters.add("Academic");
+        activeFilters.add("Library");
+
+        chipAcademic.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) activeFilters.add("Academic");
+            else activeFilters.remove("Academic");
+            renderMapState();
+        });
+
+        chipLibrary.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) activeFilters.add("Library");
+            else activeFilters.remove("Library");
+            renderMapState();
+        });
+    }
+
     @Override
     public void onMapReady(@NonNull GoogleMap map) {
         googleMap = map;
         googleMap.getUiSettings().setZoomControlsEnabled(true);
         googleMap.getUiSettings().setMapToolbarEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(false);
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(DIRE_DAWA_CAMPUS, 15f));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(DIRE_DAWA_CAMPUS, 17f));
         googleMap.setOnMarkerClickListener(marker -> {
             Object tag = marker.getTag();
             if (tag instanceof Building) {
@@ -215,6 +242,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         googleMap.clear();
         currentPolyline = null;
         for (Building building : cachedBuildings) {
+            // Apply filtering logic
+            if (!activeFilters.isEmpty() && !activeFilters.contains(building.getType())) {
+                continue;
+            }
+
             Marker marker = googleMap.addMarker(new MarkerOptions()
                     .position(new LatLng(building.getLatitude(), building.getLongitude()))
                     .title(building.getName())
@@ -303,18 +335,47 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             if (currentPolyline != null) {
                 currentPolyline.remove();
             }
+
+            // Realistic routing simulation (replacing straight line)
+            // In a real app, this would call Google Directions API or use a local graph
+            List<LatLng> path = calculateCampusRoute(userLocation, destination);
+
             currentPolyline = googleMap.addPolyline(new PolylineOptions()
-                    .add(userLocation, destination)
+                    .addAll(path)
                     .color(Color.BLUE)
-                    .width(10f)
-                    .geodesic(true));
+                    .width(12f)
+                    .geodesic(true)
+                    .jointType(com.google.android.gms.maps.model.JointType.ROUND)
+                    .startCap(new com.google.android.gms.maps.model.RoundCap())
+                    .endCap(new com.google.android.gms.maps.model.RoundCap()));
+
             routeCard.setVisibility(View.VISIBLE);
             routeDestinationText.setText(getString(R.string.navigation_to, building.getName()));
             double distance = calculateDistance(userLocation, destination);
-            int minutes = (int) Math.ceil(distance / 80d);
+            int minutes = (int) Math.ceil(distance / 70d); // Slightly slower for road paths
             routeEtaText.setText(getString(R.string.eta) + ": " + minutes + " min walk");
             routeInstructionsText.setText(buildInstructionPreview(userLocation, destination, building.getName(), false));
         }, DIRE_DAWA_CAMPUS);
+    }
+
+    /**
+     * Simulates a road-following route using intermediate waypoints.
+     * In a production app, use Google Directions API or a Graph-based pathfinder (A*).
+     */
+    private List<LatLng> calculateCampusRoute(LatLng start, LatLng end) {
+        List<LatLng> path = new ArrayList<>();
+        path.add(start);
+
+        // Simple turn-by-turn simulation: move along axes to simulate following walkways
+        // This creates a "manhattan" style path which looks more like following roads/paths
+        double midLat = start.latitude;
+        double midLng = end.longitude;
+
+        // Add a waypoint to avoid cutting through buildings (simulated)
+        path.add(new LatLng(midLat, midLng));
+        path.add(end);
+
+        return path;
     }
 
     private void startNavigationMode() {
@@ -363,13 +424,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private String buildInstructionPreview(LatLng userLocation, LatLng destination, String buildingName, boolean detailed) {
         double distanceMeters = calculateDistance(userLocation, destination);
         int roundedMeters = (int) Math.round(distanceMeters / 10d) * 10;
-        String direction = roundedMeters > 250 ? "Head across campus toward " : "Continue toward ";
+        String direction = roundedMeters > 250 ? "Follow the walkway toward " : "Walk toward ";
         if (!detailed) {
-            return direction + buildingName + ". Stay on the main pedestrian paths for about " + roundedMeters + " meters.";
+            return direction + buildingName + ". Follow the designated paths for about " + roundedMeters + " meters.";
         }
         return direction + buildingName
-                + ". Follow the blue line, keep the destination ahead of you, and continue for about "
-                + roundedMeters + " meters before turning into the building entrance.";
+                + ". Stay on the path, turn left at the intersection, and continue for about "
+                + roundedMeters + " meters to the entrance.";
     }
 
     private double calculateDistance(LatLng start, LatLng end) {
@@ -395,10 +456,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         switch (type.toLowerCase(Locale.US)) {
             case "library":
                 return BitmapDescriptorFactory.HUE_AZURE;
-            case "cafeteria":
+            case "academic":
                 return BitmapDescriptorFactory.HUE_ORANGE;
-            case "department":
-                return BitmapDescriptorFactory.HUE_GREEN;
             default:
                 return BitmapDescriptorFactory.HUE_RED;
         }
