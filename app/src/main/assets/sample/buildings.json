@@ -1,56 +1,38 @@
 [
   {
-    "id": "admin_block",
-    "name": "Administration Block",
-    "description": "Central administration offices and student help desk.",
-    "type": "Building",
-    "latitude": 9.5934,
-    "longitude": 41.8656,
+    "id": "block_15",
+    "name": "Block 15",
+    "description": "School of Computing",
+    "type": "Academic",
+    "latitude": 9.620196525436004,
+    "longitude": 41.839338218259144,
     "favorite": false
   },
   {
-    "id": "engineering_complex",
-    "name": "Engineering Complex",
-    "description": "Lecture rooms, labs, and project spaces for engineering students.",
-    "type": "Department",
-    "latitude": 9.5925,
-    "longitude": 41.8674,
+    "id": "fbe",
+    "name": "FBE",
+    "description": "Library",
+    "type": "Library",
+    "latitude": 9.618839391546347,
+    "longitude": 41.839518229878266,
     "favorite": false
   },
-  { 
+  {
     "id": "main_library",
     "name": "Main Library",
-    "description": "Library with reading halls, digital catalog, and study rooms.",
+    "description": "DDU Main Library",
     "type": "Library",
-    "latitude": 9.5941,
-    "longitude": 41.8669,
+    "latitude": 9.62138822309257,
+    "longitude": 41.840865725648925,
     "favorite": false
   },
   {
-    "id": "student_cafe",
-    "name": "Student Cafeteria",
-    "description": "Affordable meals and drinks for students and staff.",
-    "type": "Cafeteria",
-    "latitude": 9.5918,
-    "longitude": 41.8652,
-    "favorite": false
-  },
-  {
-    "id": "ict_center",
-    "name": "ICT Center",
-    "description": "Campus digital services, Wi-Fi support, and computer labs.",
-    "type": "Department",
-    "latitude": 9.593,
-    "longitude": 41.8681,
-    "favorite": false
-  },
-  {
-    "id": "business_school",
-    "name": "School of Business",
-    "description": "Business and economics classrooms and academic offices.",
-    "type": "Building",
-    "latitude": 9.5948,
-    "longitude": 41.8648,
+    "id": "medicine_health_sciences",
+    "name": "College Of Medicine and Health Sciences",
+    "description": "College Of Medicine and Health Sciences",
+    "type": "Academic",
+    "latitude": 9.622155576220745,
+    "longitude": 41.84019676107875,
     "favorite": false
   }
 ]
