@@ -61,4 +61,12 @@
     <string name="offline_ready">Offline-ready map data</string>
     <string name="detected_room">Detected room: %1$s</string>
     <string name="active_event">Active event</string>
+    <string name="location_permission_denied">Location permission is required for navigation.</string>
+    <string name="location_unavailable">Unable to get GPS fix. Enable location services and try again.</string>
+    <string name="location_using_campus_preview">Showing destination only. Enable location to preview your route.</string>
+    <string name="route_rerouting">Recalculating route…</string>
+    <string name="end_navigation">End</string>
+    <string name="enable_location">Enable Location</string>
+    <string name="location_unavailable_title">Location Unavailable</string>
+    <string name="location_unavailable_desc">Please enable GPS and location permissions to use navigation features.</string>
 </resources>
