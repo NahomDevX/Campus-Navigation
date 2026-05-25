@@ -90,9 +90,16 @@ public class DirectionsRouteFetcher {
         connection.setReadTimeout(10000);
         connection.setRequestMethod("GET");
 
+        int responseCode = connection.getResponseCode();
+        java.io.InputStream stream = responseCode >= 200 && responseCode < 300
+                ? connection.getInputStream()
+                : connection.getErrorStream();
+        if (stream == null) {
+            return null;
+        }
+
         String responseBody;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                connection.getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             StringBuilder builder = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
