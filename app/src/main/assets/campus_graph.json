@@ -1,0 +1,30 @@
+{
+  "nodes": [
+    {"id": "main_gate", "lat": 9.6185, "lng": 41.8398},
+    {"id": "fbe_entrance", "lat": 9.618839391546347, "lng": 41.839518229878266},
+    {"id": "walkway_west", "lat": 9.6195, "lng": 41.8394},
+    {"id": "walkway_center", "lat": 9.6205, "lng": 41.8398},
+    {"id": "block_15_entrance", "lat": 9.620196525436004, "lng": 41.839338218259144},
+    {"id": "walkway_east", "lat": 9.6210, "lng": 41.8405},
+    {"id": "main_library_entrance", "lat": 9.62138822309257, "lng": 41.840865725648925},
+    {"id": "medicine_entrance", "lat": 9.622155576220745, "lng": 41.84019676107875},
+    {"id": "campus_center", "lat": 9.620186228099227, "lng": 41.84080857019687},
+    {"id": "walkway_north", "lat": 9.6218, "lng": 41.8402}
+  ],
+  "edges": [
+    {"from": "main_gate", "to": "fbe_entrance"},
+    {"from": "main_gate", "to": "walkway_west"},
+    {"from": "fbe_entrance", "to": "walkway_west"},
+    {"from": "walkway_west", "to": "walkway_center"},
+    {"from": "walkway_center", "to": "block_15_entrance"},
+    {"from": "walkway_center", "to": "campus_center"},
+    {"from": "walkway_center", "to": "walkway_east"},
+    {"from": "walkway_east", "to": "main_library_entrance"},
+    {"from": "walkway_east", "to": "walkway_north"},
+    {"from": "walkway_north", "to": "medicine_entrance"},
+    {"from": "campus_center", "to": "main_library_entrance"},
+    {"from": "campus_center", "to": "medicine_entrance"},
+    {"from": "block_15_entrance", "to": "campus_center"},
+    {"from": "fbe_entrance", "to": "walkway_center"}
+  ]
+}
