@@ -1,120 +1,298 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Map Fragment -->
     <fragment
         android:id="@+id/mapFragment"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <LinearLayout
+    <!-- Default UI Container -->
+    <FrameLayout
+        android:id="@+id/defaultUiContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="match_parent">
 
-        <com.google.android.material.textfield.TextInputLayout
+        <!-- Top Search Bar -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+            android:layout_margin="16dp"
+            android:layout_gravity="top"
+            app:cardElevation="4dp"
+            app:cardCornerRadius="24dp">
 
-            <AutoCompleteTextView
-                android:id="@+id/mapSearchBar"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/search_buildings"
-                android:inputType="text"
-                android:imeOptions="actionSearch" />
-        </com.google.android.material.textfield.TextInputLayout>
+                app:boxBackgroundMode="none"
+                app:hintEnabled="false">
 
-        <HorizontalScrollView
+                <AutoCompleteTextView
+                    android:id="@+id/mapSearchBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/search_buildings"
+                    android:inputType="text"
+                    android:imeOptions="actionSearch"
+                    android:padding="16dp"
+                    android:background="@null"
+                    android:drawableStart="@android:drawable/ic_menu_search"
+                    android:drawablePadding="8dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Map Overlay Container (Above Bottom Sheet) -->
+        <LinearLayout
+            android:id="@+id/mapOverlayContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:scrollbars="none">
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:clipToPadding="false">
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/filterChipGroup"
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/filterChipGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="false">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipAcademic"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Academic"
+                        android:checked="true" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipLibrary"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Library"
+                        android:checked="true" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/myLocationFab"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:singleSelection="false">
+                android:layout_gravity="end"
+                android:layout_marginTop="16dp"
+                android:src="@android:drawable/ic_menu_mylocation"
+                android:tint="@color/white"
+                app:backgroundTint="@color/campus_primary"
+                android:contentDescription="@string/my_location" />
+        </LinearLayout>
+    </FrameLayout>
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipAcademic"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Academic"
-                    android:checked="true" />
+    <!-- Bottom Sheet -->
+    <LinearLayout
+        android:id="@+id/bottomSheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bottom_sheet_bg"
+        android:padding="16dp"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+        app:behavior_hideable="true"
+        app:behavior_peekHeight="0dp"
+        android:elevation="8dp">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipLibrary"
-                    style="@style/Widget.Material3.Chip.Filter"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Library"
-                    android:checked="true" />
+        <View
+            android:layout_width="32dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:background="#E0E0E0"
+            android:layout_marginBottom="16dp" />
 
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/myLocationFab"
+        <TextView
+            android:id="@+id/routeDestinationText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="12dp"
-            android:src="@android:drawable/ic_menu_mylocation"
-            android:tint="@color/white"
-            app:fabSize="mini"
-            app:backgroundTint="@color/campus_primary"
-            android:contentDescription="@string/my_location" />
+            android:textColor="@color/campus_text"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/routeCard"
+        <TextView
+            android:id="@+id/routeEtaText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/campus_muted" />
+
+        <TextView
+            android:id="@+id/routeInstructionsText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:visibility="gone">
+            android:textColor="@color/campus_text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/startRouteButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/start_navigation" />
+    </LinearLayout>
+
+    <!-- Navigation UI Container -->
+    <FrameLayout
+        android:id="@+id/navigationUiContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <!-- Top Bar -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:layout_gravity="top"
+            app:cardElevation="8dp"
+            app:cardCornerRadius="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/navDestinationText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:textColor="@color/campus_text" />
+
+                    <TextView
+                        android:id="@+id/navEtaText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/campus_primary"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/endNavigationButton"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/end_navigation"
+                    app:backgroundTint="#FFEBEE"
+                    android:textColor="#D32F2F" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Bottom Turn-by-Turn Banner -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:layout_gravity="bottom"
+            app:cardElevation="8dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/campus_primary">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@android:drawable/ic_menu_directions"
+                    app:tint="@color/white"
+                    android:layout_marginEnd="16dp" />
+
+                <TextView
+                    android:id="@+id/navInstructionsText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </FrameLayout>
+
+    <!-- Location Permission Card -->
+    <FrameLayout
+        android:id="@+id/locationPermissionContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="32dp"
+            app:cardElevation="8dp"
+            app:cardCornerRadius="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="24dp"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@android:drawable/ic_menu_mylocation"
+                    app:tint="@color/campus_primary"
+                    android:layout_marginBottom="16dp" />
 
                 <TextView
-                    android:id="@+id/routeDestinationText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="@string/location_unavailable_title"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
                     android:textColor="@color/campus_text"
-                    android:textStyle="bold" />
+                    android:layout_marginBottom="8dp" />
 
                 <TextView
-                    android:id="@+id/routeEtaText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/campus_muted" />
-
-                <TextView
-                    android:id="@+id/routeInstructionsText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:textColor="@color/campus_text" />
+                    android:text="@string/location_unavailable_desc"
+                    android:textAlignment="center"
+                    android:textColor="@color/campus_muted"
+                    android:layout_marginBottom="24dp" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/startRouteButton"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/enableLocationButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/start_navigation" />
+                    android:text="@string/enable_location" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-    </LinearLayout>
-</FrameLayout>
+    </FrameLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
