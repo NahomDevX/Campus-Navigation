@@ -14,11 +14,12 @@ import android.widget.AutoCompleteTextView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.activity.result.ActivityResultLauncher;
+
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -62,15 +63,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private static final float DEVIATION_THRESHOLD_METERS = 35f;
     private static final float WALKING_SPEED_METERS_PER_MINUTE = 70f;
 
+    private enum PendingLocationAction {
+        NONE,
+        MY_LOCATION,
+        START_NAVIGATION
+    }
+
     private GoogleMap googleMap;
     private AutoCompleteTextView searchBar;
     private View defaultUiContainer;
     private View navigationUiContainer;
     private View locationPermissionContainer;
     private BottomSheetBehavior<View> bottomSheetBehavior;
-    private TextView routeDestinationText;
-    private TextView routeEtaText;
-    private TextView routeInstructionsText;
+    private TextView buildingNameText;
+    private TextView buildingTypeText;
+    private TextView buildingDescriptionText;
+    private TextView walkTimeText;
     private MaterialButton startRouteButton;
     private TextView navDestinationText;
     private TextView navEtaText;
@@ -78,6 +86,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private MaterialButton endNavigationButton;
     private MaterialButton enableLocationButton;
     private FloatingActionButton myLocationFab;
+    private View recenterButton;
+    private TextView locationPermissionText;
     private View rootView;
     private BuildingViewModel buildingViewModel;
     private EventViewModel eventViewModel;
@@ -95,11 +105,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private boolean isRerouting = false;
     private List<LatLng> activeRoute = new ArrayList<>();
     private LatLng navigationDestination;
+    private PendingLocationAction pendingLocationAction = PendingLocationAction.NONE;
     private final ActivityResultLauncher<String[]> locationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 if (PermissionHelper.hasLocationPermission(requireContext())) {
                     enableLocationIfPossible();
+                    retryPendingLocationAction();
                 } else {
+                    pendingLocationAction = PendingLocationAction.NONE;
                     showLocationPermissionSnackbar();
                 }
             });
@@ -132,17 +145,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        routeDestinationText = view.findViewById(R.id.routeDestinationText);
-        routeEtaText = view.findViewById(R.id.routeEtaText);
-        routeInstructionsText = view.findViewById(R.id.routeInstructionsText);
+        buildingNameText = view.findViewById(R.id.buildingNameText);
+        buildingTypeText = view.findViewById(R.id.buildingTypeText);
+        buildingDescriptionText = view.findViewById(R.id.buildingDescriptionText);
+        walkTimeText = view.findViewById(R.id.walkTimeText);
         startRouteButton = view.findViewById(R.id.startRouteButton);
         
         navDestinationText = view.findViewById(R.id.navDestinationText);
         navEtaText = view.findViewById(R.id.navEtaText);
         navInstructionsText = view.findViewById(R.id.navInstructionsText);
         endNavigationButton = view.findViewById(R.id.endNavigationButton);
+        recenterButton = view.findViewById(R.id.recenterButton);
         
         enableLocationButton = view.findViewById(R.id.enableLocationButton);
+        locationPermissionText = view.findViewById(R.id.locationPermissionText);
         myLocationFab = view.findViewById(R.id.myLocationFab);
 
         locationHelper = new LocationHelper(requireContext());
@@ -169,7 +185,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 cachedBuildings.addAll(resource.getData());
             }
             resolveSelectedBuildingFromArgs();
-            renderMapState();
+            if (!isNavigating) {
+                renderMapState();
+            }
         });
         buildingViewModel.getSuggestions().observe(getViewLifecycleOwner(), this::updateSuggestions);
         eventViewModel.getActiveEvents().observe(getViewLifecycleOwner(), events -> {
@@ -177,13 +195,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             if (events != null) {
                 activeEvents.addAll(events);
             }
-            renderMapState();
+            if (!isNavigating) {
+                renderMapState();
+            }
         });
 
         myLocationFab.setOnClickListener(v -> centerOnMyLocation());
+        recenterButton.setOnClickListener(v -> centerOnMyLocation());
         startRouteButton.setOnClickListener(v -> startNavigationMode());
         endNavigationButton.setOnClickListener(v -> endNavigationMode());
-        enableLocationButton.setOnClickListener(v -> locationPermissionLauncher.launch(PermissionHelper.getLocationPermissions()));
+        enableLocationButton.setOnClickListener(v -> {
+            pendingLocationAction = PendingLocationAction.MY_LOCATION;
+            locationPermissionLauncher.launch(PermissionHelper.getLocationPermissions());
+        });
 
         searchBar.setOnLongClickListener(v -> {
             showMapTypeMenu(v);
@@ -217,13 +241,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onPause() {
-        stopNavigationUpdates();
+        pauseNavigationLocationUpdates();
         super.onPause();
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        if (isNavigating && locationHelper != null
+                && PermissionHelper.hasLocationPermission(requireContext())) {
+            locationHelper.startLocationUpdates(this::onNavigationLocationUpdate);
+        }
+    }
+
+    @Override
     public void onDestroyView() {
-        stopNavigationUpdates();
+        endNavigationMode(false);
         locationHelper = null;
         routeProvider = null;
         rootView = null;
@@ -263,6 +296,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         googleMap.getUiSettings().setMapToolbarEnabled(true);
         googleMap.getUiSettings().setMyLocationButtonEnabled(false);
         googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(DIRE_DAWA_CAMPUS, 17f));
+        
+        googleMap.setOnCameraMoveStartedListener(reason -> {
+            if (isNavigating && reason == GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE) {
+                if (recenterButton != null) {
+                    recenterButton.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        
         googleMap.setOnMarkerClickListener(marker -> {
             Object tag = marker.getTag();
             if (tag instanceof Building) {
@@ -298,8 +340,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         if (googleMap == null || locationHelper == null) {
             return;
         }
-        if (!ensureLocationPermission()) {
+        if (!ensureLocationPermission(PendingLocationAction.MY_LOCATION)) {
             return;
+        }
+
+        if (recenterButton != null) {
+            recenterButton.setVisibility(View.GONE);
         }
 
         locationHelper.getCurrentLocationOnce((status, userLocation) -> {
@@ -308,6 +354,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
             switch (status) {
                 case SUCCESS:
+                    if (locationPermissionContainer != null) {
+                        locationPermissionContainer.setVisibility(View.GONE);
+                    }
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 17f));
                     break;
                 case PERMISSION_DENIED:
@@ -351,7 +400,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                     .position(new LatLng(eventBuilding.getLatitude(), eventBuilding.getLongitude()))
                     .title(event.getName())
                     .snippet(getString(R.string.active_event) + ": " + eventBuilding.getName())
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)));
+                    .icon(BitmapDescriptorFactory.defaultMarker(293f))); // campus_marker_event
             if (marker != null) {
                 marker.setTag(event);
             }
@@ -359,7 +408,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         if (selectedBuilding != null) {
             boolean animate = pendingDirectoryFocus;
             pendingDirectoryFocus = false;
-            updateRoutePreview(selectedBuilding, animate);
+            showBuildingDetails(selectedBuilding, animate);
         }
     }
 
@@ -404,12 +453,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void clearSelection() {
-        stopNavigationUpdates();
+        if (isNavigating) {
+            endNavigationMode(true);
+        }
         selectedBuilding = null;
         navigationDestination = null;
         activeRoute.clear();
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-        routeInstructionsText.setText("");
+        buildingDescriptionText.setText("");
+        walkTimeText.setText("");
         if (currentPolyline != null) {
             currentPolyline.remove();
             currentPolyline = null;
@@ -419,11 +471,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private void focusOnBuilding(Building building, boolean animateCamera) {
         selectedBuilding = building;
         searchBar.setText(building.getName(), false);
-        updateRoutePreview(building, animateCamera);
+        showBuildingDetails(building, animateCamera);
     }
 
-    private void updateRoutePreview(Building building, boolean animateCamera) {
-        if (googleMap == null || routeProvider == null) {
+    private void showBuildingDetails(Building building, boolean animateCamera) {
+        if (googleMap == null) {
             return;
         }
         LatLng destination = new LatLng(building.getLatitude(), building.getLongitude());
@@ -432,11 +484,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
 
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-        routeDestinationText.setText(getString(R.string.navigation_to, building.getName()));
+        buildingNameText.setText(building.getName());
+        buildingTypeText.setText(building.getType() != null ? building.getType() : "Building");
+        buildingDescriptionText.setText(building.getDescription() != null ? building.getDescription() : "");
+        
+        if (currentPolyline != null) {
+            currentPolyline.remove();
+            currentPolyline = null;
+        }
+        activeRoute.clear();
 
         if (!PermissionHelper.hasLocationPermission(requireContext())) {
-            showDestinationOnlyPreview(building, destination);
+            walkTimeText.setText(getString(R.string.location_using_campus_preview));
             return;
+        }
+
+        if (locationPermissionText != null) {
+            locationPermissionText.setText("Finding GPS...");
         }
 
         locationHelper.getCurrentLocationOnce((status, userLocation) -> {
@@ -447,31 +511,25 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             switch (status) {
                 case SUCCESS:
-                    drawRoute(userLocation, destination, building.getName(), false);
+                    if (locationPermissionContainer != null) {
+                        locationPermissionContainer.setVisibility(View.GONE);
+                    }
+                    double distance = calculateDistance(userLocation, destination);
+                    int minutes = (int) Math.ceil(distance / WALKING_SPEED_METERS_PER_MINUTE);
+                    walkTimeText.setText(minutes + " min walk (" + Math.round(distance) + "m)");
                     break;
                 case PERMISSION_DENIED:
-                    showDestinationOnlyPreview(building, destination);
+                    walkTimeText.setText(getString(R.string.location_using_campus_preview));
                     showLocationPermissionSnackbar();
                     break;
                 case UNAVAILABLE:
                 case ERROR:
                 default:
-                    showDestinationOnlyPreview(building, destination);
+                    walkTimeText.setText(getString(R.string.location_using_campus_preview));
                     showLocationUnavailableSnackbar();
                     break;
             }
         });
-    }
-
-    private void showDestinationOnlyPreview(Building building, LatLng destination) {
-        if (currentPolyline != null) {
-            currentPolyline.remove();
-            currentPolyline = null;
-        }
-        activeRoute.clear();
-        routeEtaText.setText(getString(R.string.location_using_campus_preview));
-        routeInstructionsText.setText(getString(R.string.navigation_to, building.getName()));
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(destination, 17f));
     }
 
     private void drawRoute(LatLng start, LatLng destination, String buildingName, boolean navigating) {
@@ -487,26 +545,40 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
             currentPolyline = googleMap.addPolyline(new PolylineOptions()
                     .addAll(activeRoute)
-                    .color(Color.BLUE)
+                    .color(ContextCompat.getColor(requireContext(), R.color.campus_route_line))
                     .width(12f)
                     .geodesic(true)
                     .jointType(com.google.android.gms.maps.model.JointType.ROUND)
                     .startCap(new com.google.android.gms.maps.model.RoundCap())
                     .endCap(new com.google.android.gms.maps.model.RoundCap()));
 
-            int minutes = result.getDurationSeconds() > 0
-                    ? (int) Math.ceil(result.getDurationSeconds() / 60d)
-                    : (int) Math.ceil(result.getDistanceMeters() / WALKING_SPEED_METERS_PER_MINUTE);
-            routeEtaText.setText(getString(R.string.eta) + ": " + minutes + " min walk");
-            routeInstructionsText.setText(buildInstructionPreview(start, destination, buildingName, navigating, activeRoute));
+            applyRouteUi(start, destination, buildingName, navigating, result.getDurationSeconds(), result.getDistanceMeters());
+
+            if (navigating) {
+                updateNavigationCamera(start, destination);
+            }
         });
+    }
+
+    private void applyRouteUi(LatLng start, LatLng destination, String buildingName, boolean navigating,
+                              int durationSeconds, double distanceMeters) {
+        int minutes = durationSeconds > 0
+                ? (int) Math.ceil(durationSeconds / 60d)
+                : (int) Math.ceil(distanceMeters / WALKING_SPEED_METERS_PER_MINUTE);
+        String etaText = getString(R.string.eta) + ": " + minutes + " min walk";
+        String instructions = buildInstructionPreview(start, destination, buildingName, navigating, activeRoute);
+
+        if (navigating) {
+            navEtaText.setText(etaText);
+            navInstructionsText.setText(instructions);
+        }
     }
 
     private void startNavigationMode() {
         if (selectedBuilding == null || googleMap == null || locationHelper == null) {
             return;
         }
-        if (!ensureLocationPermission()) {
+        if (!ensureLocationPermission(PendingLocationAction.START_NAVIGATION)) {
             return;
         }
 
@@ -518,6 +590,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
             switch (status) {
                 case SUCCESS:
+                    if (locationPermissionContainer != null) {
+                        locationPermissionContainer.setVisibility(View.GONE);
+                    }
                     beginNavigationSession(userLocation, destination, selectedBuilding.getName());
                     break;
                 case PERMISSION_DENIED:
@@ -535,11 +610,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private void beginNavigationSession(LatLng userLocation, LatLng destination, String buildingName) {
         navigationDestination = destination;
         isNavigating = true;
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         defaultUiContainer.setVisibility(View.GONE);
         navigationUiContainer.setVisibility(View.VISIBLE);
         navDestinationText.setText(buildingName);
-        
+        applyRouteUi(userLocation, destination, buildingName, true, 0, calculateDistance(userLocation, destination));
+
         if (requireActivity() instanceof NavigationHost) {
             ((NavigationHost) requireActivity()).setBottomNavigationVisibility(false);
         }
@@ -549,21 +626,35 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         Toast.makeText(requireContext(), R.string.navigation_mode_enabled, Toast.LENGTH_SHORT).show();
         locationHelper.startLocationUpdates(this::onNavigationLocationUpdate);
     }
-    
+
     private void endNavigationMode() {
-        stopNavigationUpdates();
-        
+        endNavigationMode(true);
+    }
+
+    private void endNavigationMode(boolean restoreUi) {
+        pauseNavigationLocationUpdates();
+        isNavigating = false;
+        isRerouting = false;
+
+        if (recenterButton != null) {
+            recenterButton.setVisibility(View.GONE);
+        }
+
+        if (!restoreUi || navigationUiContainer == null) {
+            return;
+        }
+
         navigationUiContainer.setVisibility(View.GONE);
         defaultUiContainer.setVisibility(View.VISIBLE);
-        
+
         if (requireActivity() instanceof NavigationHost) {
             ((NavigationHost) requireActivity()).setBottomNavigationVisibility(true);
         }
-        
+
         if (selectedBuilding != null) {
-            updateRoutePreview(selectedBuilding, true);
+            showBuildingDetails(selectedBuilding, true);
         } else {
-            clearSelection();
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
     }
 
@@ -616,12 +707,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
             currentPolyline = googleMap.addPolyline(new PolylineOptions()
                     .addAll(activeRoute)
-                    .color(Color.BLUE)
+                    .color(ContextCompat.getColor(requireContext(), R.color.campus_route_line))
                     .width(12f)
                     .geodesic(true)
                     .jointType(com.google.android.gms.maps.model.JointType.ROUND)
                     .startCap(new com.google.android.gms.maps.model.RoundCap())
                     .endCap(new com.google.android.gms.maps.model.RoundCap()));
+
+            if (selectedBuilding != null) {
+                applyRouteUi(userLocation, navigationDestination, selectedBuilding.getName(), true,
+                        result.getDurationSeconds(), result.getDistanceMeters());
+            }
         });
     }
 
@@ -643,12 +739,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
 
-    private void stopNavigationUpdates() {
+    private void pauseNavigationLocationUpdates() {
         if (locationHelper != null) {
             locationHelper.stopLocationUpdates();
         }
-        isNavigating = false;
-        isRerouting = false;
+    }
+
+    private void retryPendingLocationAction() {
+        PendingLocationAction action = pendingLocationAction;
+        pendingLocationAction = PendingLocationAction.NONE;
+        if (action == PendingLocationAction.MY_LOCATION) {
+            centerOnMyLocation();
+        } else if (action == PendingLocationAction.START_NAVIGATION) {
+            startNavigationMode();
+        }
     }
 
     private void navigateToEvent(CampusEvent event) {
@@ -657,9 +761,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             return;
         }
         focusOnBuilding(building, true);
+        
+        buildingDescriptionText.setText(event.getName() + " - " + event.getDescription());
 
         if (!PermissionHelper.hasLocationPermission(requireContext()) || locationHelper == null) {
-            routeInstructionsText.setText(event.getName() + "\n" + getString(R.string.location_using_campus_preview));
+            walkTimeText.setText(getString(R.string.location_using_campus_preview));
             return;
         }
 
@@ -669,19 +775,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
             LatLng destination = new LatLng(building.getLatitude(), building.getLongitude());
             if (status == LocationHelper.LocationStatus.SUCCESS && userLocation != null) {
-                routeInstructionsText.setText(event.getName() + "\n"
-                        + buildInstructionPreview(userLocation, destination, building.getName(), true, activeRoute));
+                double distance = calculateDistance(userLocation, destination);
+                int minutes = (int) Math.ceil(distance / WALKING_SPEED_METERS_PER_MINUTE);
+                walkTimeText.setText(minutes + " min walk (" + Math.round(distance) + "m)");
             } else {
-                routeInstructionsText.setText(event.getName() + "\n" + getString(R.string.location_unavailable));
+                walkTimeText.setText(getString(R.string.location_unavailable));
             }
         });
     }
 
-    private boolean ensureLocationPermission() {
+    private boolean ensureLocationPermission(PendingLocationAction action) {
         if (PermissionHelper.hasLocationPermission(requireContext())) {
             enableLocationIfPossible();
             return true;
         }
+        pendingLocationAction = action;
         locationPermissionLauncher.launch(PermissionHelper.getLocationPermissions());
         return false;
     }
@@ -690,11 +798,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         if (locationPermissionContainer != null) {
             locationPermissionContainer.setVisibility(View.VISIBLE);
         }
+        if (rootView != null) {
+            Snackbar.make(rootView, R.string.location_permission_denied, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.retry, v -> locationPermissionLauncher.launch(PermissionHelper.getLocationPermissions()))
+                    .show();
+        }
     }
 
     private void showLocationUnavailableSnackbar() {
         if (locationPermissionContainer != null) {
-            locationPermissionContainer.setVisibility(View.VISIBLE);
+            locationPermissionContainer.setVisibility(View.GONE);
+        }
+        if (rootView != null) {
+            Snackbar.make(rootView, R.string.location_unavailable, Snackbar.LENGTH_LONG).show();
         }
     }
 
@@ -769,9 +885,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
         switch (type.toLowerCase(Locale.US)) {
             case "library":
-                return BitmapDescriptorFactory.HUE_AZURE;
+                return 200f; // campus_marker_library
             case "academic":
-                return BitmapDescriptorFactory.HUE_ORANGE;
+                return 32f; // campus_secondary
             default:
                 return BitmapDescriptorFactory.HUE_RED;
         }
