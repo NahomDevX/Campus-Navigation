@@ -4,8 +4,12 @@
     <color name="campus_primary_dark">#082F49</color>
     <color name="campus_secondary">#D97706</color>
     <color name="campus_surface">#F8FAFC</color>
+    <color name="campus_card_surface">#FFFFFF</color>
     <color name="campus_text">#0F172A</color>
     <color name="campus_muted">#64748B</color>
+    <color name="campus_route_line">#2563EB</color>
+    <color name="campus_marker_library">#0284C7</color>
+    <color name="campus_marker_event">#C026D3</color>
     <color name="campus_success">#0F766E</color>
     <color name="campus_error">#B91C1C</color>
     <color name="white">#FFFFFF</color>
