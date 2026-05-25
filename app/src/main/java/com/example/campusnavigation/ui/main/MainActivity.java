@@ -1,8 +1,5 @@
 package com.example.campusnavigation.ui.main;
 
-import android.Manifest;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -10,7 +7,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.campusnavigation.R;
@@ -24,11 +20,18 @@ import com.example.campusnavigation.ui.map.MapFragment;
 import com.example.campusnavigation.ui.settings.SettingsFragment;
 import com.example.campusnavigation.util.PermissionHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.snackbar.Snackbar;
+
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity implements NavigationHost {
     private BottomNavigationView bottomNavigationView;
+    private final Queue<String[]> pendingPermissions = new LinkedList<>();
+    private String[] lastRequestedPermissions;
     private final ActivityResultLauncher<String[]> permissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> { });
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), this::onPermissionsResult);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -57,12 +60,45 @@ public class MainActivity extends AppCompatActivity implements NavigationHost {
     }
 
     private void requestCorePermissions() {
-        permissionLauncher.launch(PermissionHelper.getLocationPermissions());
-        permissionLauncher.launch(PermissionHelper.getBluetoothPermissions());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            permissionLauncher.launch(PermissionHelper.getNotificationPermissions());
+        pendingPermissions.clear();
+        if (!PermissionHelper.hasLocationPermission(this)) {
+            pendingPermissions.add(PermissionHelper.getLocationPermissions());
         }
+        if (!PermissionHelper.hasBluetoothPermissions(this)) {
+            pendingPermissions.add(PermissionHelper.getBluetoothPermissions());
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && !PermissionHelper.hasNotificationPermission(this)) {
+            pendingPermissions.add(PermissionHelper.getNotificationPermissions());
+        }
+        requestNextPermission();
+    }
+
+    private void requestNextPermission() {
+        String[] next = pendingPermissions.poll();
+        if (next != null && next.length > 0) {
+            lastRequestedPermissions = next;
+            permissionLauncher.launch(next);
+        }
+    }
+
+    private void onPermissionsResult(Map<String, Boolean> result) {
+        if (lastRequestedPermissions != null
+                && PermissionHelper.isLocationPermissionRequest(lastRequestedPermissions)
+                && !PermissionHelper.werePermissionsGranted(lastRequestedPermissions, result)) {
+            showLocationPermissionSnackbar();
+        }
+        requestNextPermission();
+    }
+
+    private void showLocationPermissionSnackbar() {
+        Snackbar.make(bottomNavigationView, R.string.location_permission_denied, Snackbar.LENGTH_LONG)
+                .setAction(R.string.retry, v -> {
+                    pendingPermissions.clear();
+                    pendingPermissions.add(PermissionHelper.getLocationPermissions());
+                    requestNextPermission();
+                })
+                .show();
     }
 
     private void switchFragment(Fragment fragment) {
@@ -83,5 +119,12 @@ public class MainActivity extends AppCompatActivity implements NavigationHost {
                 .replace(R.id.mainNavHost, IndoorNavigationFragment.newInstance())
                 .addToBackStack("indoor")
                 .commit();
+    }
+
+    @Override
+    public void setBottomNavigationVisibility(boolean visible) {
+        if (bottomNavigationView != null) {
+            bottomNavigationView.setVisibility(visible ? android.view.View.VISIBLE : android.view.View.GONE);
+        }
     }
 }
