@@ -6,4 +6,6 @@ public interface NavigationHost {
     void openMapForBuilding(Building building);
 
     void openIndoorNavigation();
+
+    void setBottomNavigationVisibility(boolean visible);
 }
