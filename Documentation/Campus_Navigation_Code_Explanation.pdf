@@ -1,0 +1,292 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R] /Count 7 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 3323 >>
+stream
+BT /F1 18 Tf 54 760 Td (Campus Navigation Code Explanation) Tj ET
+BT /F1 10 Tf 54 738 Td (This document explains the Campus Navigation Android project folder by folder. The app is a) Tj ET
+BT /F1 10 Tf 54 724 Td (Java Android application for campus navigation. It uses Firebase Authentication, Firestore,) Tj ET
+BT /F1 10 Tf 54 710 Td (Firebase Cloud Messaging, Room database, WorkManager, Google Maps, location services, and a) Tj ET
+BT /F1 10 Tf 54 696 Td (simulated indoor beacon navigation system.) Tj ET
+BT /F1 10 Tf 54 668 Td (The project follows an MVVM-style structure: UI screens call ViewModels, ViewModels call) Tj ET
+BT /F1 10 Tf 54 654 Td (Repositories, Repositories load data from Firebase, Room, preferences, or bundled asset JSON) Tj ET
+BT /F1 10 Tf 54 640 Td (files, and the UI observes the results.) Tj ET
+BT /F1 14 Tf 54 598 Td (Root Project Folder) Tj ET
+BT /F1 10 Tf 54 576 Td (settings.gradle names the project and includes the app module. This tells Gradle that the) Tj ET
+BT /F1 10 Tf 54 562 Td (Android application lives in the app folder.) Tj ET
+BT /F1 10 Tf 54 534 Td (build.gradle at the root level defines project-wide Gradle plugins, including the Android) Tj ET
+BT /F1 10 Tf 54 520 Td (Gradle plugin and Google Services plugin used by Firebase.) Tj ET
+BT /F1 10 Tf 54 492 Td (gradle.properties stores build configuration such as AndroidX support, Jetifier, Gradle) Tj ET
+BT /F1 10 Tf 54 478 Td (parallel execution, and JVM memory settings.) Tj ET
+BT /F1 10 Tf 54 450 Td (gradlew and gradlew.bat are Gradle wrapper launchers. They allow the project to build with) Tj ET
+BT /F1 10 Tf 54 436 Td (the configured Gradle version without requiring a manually installed Gradle.) Tj ET
+BT /F1 10 Tf 54 408 Td (README.md is the setup and feature guide. It explains Firebase setup, Maps API setup,) Tj ET
+BT /F1 10 Tf 54 394 Td (Firestore collections, and the main app features.) Tj ET
+BT /F1 10 Tf 54 366 Td (.gitignore prevents generated files, local machine files, and secrets such as google-) Tj ET
+BT /F1 10 Tf 54 352 Td (services.json from being committed.) Tj ET
+BT /F1 14 Tf 54 310 Td (app Folder) Tj ET
+BT /F1 10 Tf 54 288 Td (The app folder is the Android application module. It contains the Gradle configuration,) Tj ET
+BT /F1 10 Tf 54 274 Td (manifest, Java source code, XML resources, and bundled asset files.) Tj ET
+BT /F1 10 Tf 54 246 Td (app/build.gradle defines the package com.example.campusnavigation, SDK versions, Java) Tj ET
+BT /F1 10 Tf 54 232 Td (version, View Binding, BuildConfig, and all app dependencies. Important dependencies include) Tj ET
+BT /F1 10 Tf 54 218 Td (AppCompat, Material Components, Lifecycle ViewModel and LiveData, Room, WorkManager, Google) Tj ET
+BT /F1 10 Tf 54 204 Td (Maps, Google Location Services, Firebase Auth, Firestore, FCM, Gson, and Guava.) Tj ET
+BT /F1 10 Tf 54 176 Td (app/proguard-rules.pro is reserved for release code shrinking rules. Since minification is) Tj ET
+BT /F1 10 Tf 54 162 Td (disabled, it currently acts mostly as a placeholder.) Tj ET
+BT /F1 14 Tf 54 120 Td (AndroidManifest.xml) Tj ET
+BT /F1 10 Tf 54 98 Td (The manifest declares the app package, permissions, activities, services, and Google Maps) Tj ET
+BT /F1 10 Tf 54 84 Td (metadata. It requests internet, network, location, notification, and Bluetooth permissions.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 3238 >>
+stream
+BT /F1 10 Tf 54 760 Td (SplashActivity is the launcher activity. AuthActivity handles login and registration.) Tj ET
+BT /F1 10 Tf 54 746 Td (MainActivity is the main screen after authentication. CampusMessagingService receives) Tj ET
+BT /F1 10 Tf 54 732 Td (Firebase Cloud Messaging notifications.) Tj ET
+BT /F1 10 Tf 54 704 Td (The manifest also registers CampusNavigationApp as the custom Application class. This class) Tj ET
+BT /F1 10 Tf 54 690 Td (is created before activities and is used for app-wide initialization.) Tj ET
+BT /F1 14 Tf 54 648 Td (Application Bootstrap) Tj ET
+BT /F1 10 Tf 54 626 Td (CampusNavigationApp.java initializes core dependencies when the app starts. It creates or) Tj ET
+BT /F1 10 Tf 54 612 Td (exposes the Room database, repositories, preferences repository, notification channels, and) Tj ET
+BT /F1 10 Tf 54 598 Td (saved theme mode.) Tj ET
+BT /F1 10 Tf 54 570 Td (This class acts as a simple dependency provider. ViewModels can access repositories from the) Tj ET
+BT /F1 10 Tf 54 556 Td (application instance instead of constructing them independently.) Tj ET
+BT /F1 14 Tf 54 514 Td (model Folder) Tj ET
+BT /F1 10 Tf 54 492 Td (The model folder contains plain Java objects that describe app data.) Tj ET
+BT /F1 10 Tf 54 464 Td (Building.java represents one campus building. It stores an id, name, description, type,) Tj ET
+BT /F1 10 Tf 54 450 Td (latitude, longitude, and whether it is a favorite. The Firestore document id is mapped onto) Tj ET
+BT /F1 10 Tf 54 436 Td (the building id.) Tj ET
+BT /F1 10 Tf 54 408 Td (CampusEvent.java represents a campus event. It includes event id, event name, building id,) Tj ET
+BT /F1 10 Tf 54 394 Td (building name, event time in milliseconds, and description.) Tj ET
+BT /F1 10 Tf 54 366 Td (BeaconNode.java represents a simulated indoor beacon. It contains an id, room name, x and y) Tj ET
+BT /F1 10 Tf 54 352 Td (coordinates for the indoor map, and a simulated signal value.) Tj ET
+BT /F1 10 Tf 54 324 Td (IndoorRoute.java represents a generated indoor route. It stores the starting room, ending) Tj ET
+BT /F1 10 Tf 54 310 Td (room, and a list of instruction steps.) Tj ET
+BT /F1 14 Tf 54 268 Td (data/local Folder) Tj ET
+BT /F1 10 Tf 54 246 Td (The data/local folder is the Room database layer. Room is an Android library that wraps) Tj ET
+BT /F1 10 Tf 54 232 Td (SQLite with Java annotations and DAO interfaces.) Tj ET
+BT /F1 10 Tf 54 204 Td (AppDatabase.java defines the local database named campus_navigation.db. It registers the) Tj ET
+BT /F1 10 Tf 54 190 Td (BuildingEntity and EventEntity tables and exposes DAOs for database access.) Tj ET
+BT /F1 10 Tf 54 162 Td (BuildingEntity.java defines the buildings table. It is the database form of a Building) Tj ET
+BT /F1 10 Tf 54 148 Td (object and contains fields that Room stores in SQLite.) Tj ET
+BT /F1 10 Tf 54 120 Td (EventEntity.java defines the events table. It is the database form of a CampusEvent object.) Tj ET
+BT /F1 10 Tf 54 92 Td (BuildingDao.java contains database operations for buildings, including observing all) Tj ET
+BT /F1 10 Tf 54 78 Td (buildings, searching, loading favorites, inserting data, updating favorite state, and) Tj ET
+BT /F1 10 Tf 54 64 Td (counting stored buildings.) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 3102 >>
+stream
+BT /F1 10 Tf 54 746 Td (EventDao.java contains database operations for events, including observing all events,) Tj ET
+BT /F1 10 Tf 54 732 Td (inserting event lists, counting events, and loading stored events.) Tj ET
+BT /F1 14 Tf 54 690 Td (data/mapper Folder) Tj ET
+BT /F1 10 Tf 54 668 Td (Mapper classes convert between database entities and UI/domain models. This keeps the) Tj ET
+BT /F1 10 Tf 54 654 Td (database format separate from the rest of the app.) Tj ET
+BT /F1 10 Tf 54 626 Td (BuildingMapper.java converts BuildingEntity objects into Building objects and converts) Tj ET
+BT /F1 10 Tf 54 612 Td (Building objects back into BuildingEntity objects before saving.) Tj ET
+BT /F1 10 Tf 54 584 Td (EventMapper.java does the same conversion work for EventEntity and CampusEvent.) Tj ET
+BT /F1 14 Tf 54 542 Td (data/repository Folder) Tj ET
+BT /F1 10 Tf 54 520 Td (Repositories coordinate where data comes from and where it is saved. They hide Firebase,) Tj ET
+BT /F1 10 Tf 54 506 Td (Room, SharedPreferences, and asset-loading details from the UI.) Tj ET
+BT /F1 10 Tf 54 478 Td (BuildingRepository.java manages building data. It syncs buildings from Firestore into Room,) Tj ET
+BT /F1 10 Tf 54 464 Td (loads sample buildings from assets when needed, exposes searchable LiveData, provides) Tj ET
+BT /F1 10 Tf 54 450 Td (autocomplete suggestions, and toggles favorites.) Tj ET
+BT /F1 10 Tf 54 422 Td (EventRepository.java manages event data. It syncs events from Firestore into Room and uses) Tj ET
+BT /F1 10 Tf 54 408 Td (WorkManager to schedule reminder notifications before future events.) Tj ET
+BT /F1 10 Tf 54 380 Td (AuthRepository.java wraps Firebase Authentication. It supports email login, registration,) Tj ET
+BT /F1 10 Tf 54 366 Td (anonymous guest sign-in, sign-out, and checking whether a user is logged in.) Tj ET
+BT /F1 10 Tf 54 338 Td (PreferencesRepository.java wraps SharedPreferences. It stores dark mode, notification) Tj ET
+BT /F1 10 Tf 54 324 Td (preference, and language choice.) Tj ET
+BT /F1 14 Tf 54 282 Td (viewmodel Folder) Tj ET
+BT /F1 10 Tf 54 260 Td (ViewModels hold screen state and expose data to Activities and Fragments through LiveData.) Tj ET
+BT /F1 10 Tf 54 246 Td (They make the UI easier to test and keep business logic out of XML and screen classes.) Tj ET
+BT /F1 10 Tf 54 218 Td (AuthViewModel.java exposes login, register, and guest login operations. It wraps results in) Tj ET
+BT /F1 10 Tf 54 204 Td (a Resource object so the UI can show loading, success, or error states.) Tj ET
+BT /F1 10 Tf 54 176 Td (BuildingViewModel.java exposes building lists, search queries, sync actions, suggestions,) Tj ET
+BT /F1 10 Tf 54 162 Td (and favorite updates.) Tj ET
+BT /F1 10 Tf 54 134 Td (EventViewModel.java exposes event lists and calculates active events for map display.) Tj ET
+BT /F1 10 Tf 54 106 Td (SettingsViewModel.java exposes user settings and logout behavior.) Tj ET
+BT /F1 10 Tf 54 78 Td (IndoorNavigationViewModel.java runs the simulated beacon scan loop, updates current room) Tj ET
+BT /F1 10 Tf 54 64 Td (state, and generates indoor route steps.) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 2830 >>
+stream
+BT /F1 14 Tf 54 732 Td (ui Folder) Tj ET
+BT /F1 10 Tf 54 710 Td (The ui folder contains Activities, Fragments, adapters, and small UI contracts.) Tj ET
+BT /F1 10 Tf 54 682 Td (ui/splash/SplashActivity.java shows a short splash screen, then checks authentication.) Tj ET
+BT /F1 10 Tf 54 668 Td (Logged-in users go to MainActivity. Other users go to AuthActivity.) Tj ET
+BT /F1 10 Tf 54 640 Td (ui/auth/AuthActivity.java displays the login and registration form. It validates user input,) Tj ET
+BT /F1 10 Tf 54 626 Td (supports guest login, calls AuthViewModel, and reacts to success or error states.) Tj ET
+BT /F1 10 Tf 54 598 Td (ui/main/MainActivity.java is the main container. It hosts the bottom navigation, switches) Tj ET
+BT /F1 10 Tf 54 584 Td (between dashboard, map, directory, events, and settings fragments, and requests runtime) Tj ET
+BT /F1 10 Tf 54 570 Td (permissions.) Tj ET
+BT /F1 10 Tf 54 542 Td (ui/common/NavigationHost.java is an interface used by fragments when they need MainActivity) Tj ET
+BT /F1 10 Tf 54 528 Td (to perform navigation actions, such as opening the map for a selected building.) Tj ET
+BT /F1 14 Tf 54 486 Td (UI Fragments) Tj ET
+BT /F1 10 Tf 54 464 Td (DashboardFragment.java is the home tab. It shows summary information, highlight cards, and) Tj ET
+BT /F1 10 Tf 54 450 Td (entry points such as indoor navigation.) Tj ET
+BT /F1 10 Tf 54 422 Td (MapFragment.java is the largest screen. It displays Google Maps, building markers, event) Tj ET
+BT /F1 10 Tf 54 408 Td (markers, search suggestions, type filters, a building detail bottom sheet, route drawing,) Tj ET
+BT /F1 10 Tf 54 394 Td (live location tracking, ETA display, turn-by-turn style instructions, and rerouting.) Tj ET
+BT /F1 10 Tf 54 366 Td (DirectoryFragment.java shows a searchable RecyclerView of buildings. Tapping a building) Tj ET
+BT /F1 10 Tf 54 352 Td (opens it on the map. Long-pressing can toggle favorite state.) Tj ET
+BT /F1 10 Tf 54 324 Td (EventsFragment.java shows campus events in a list.) Tj ET
+BT /F1 10 Tf 54 296 Td (SettingsFragment.java contains switches and controls for notifications, dark mode, language,) Tj ET
+BT /F1 10 Tf 54 282 Td (manual sync, and logout.) Tj ET
+BT /F1 10 Tf 54 254 Td (IndoorNavigationFragment.java displays the simulated indoor navigation screen. It shows) Tj ET
+BT /F1 10 Tf 54 240 Td (beacon status, room input fields, route steps, and an animated blue dot on an indoor grid.) Tj ET
+BT /F1 14 Tf 54 198 Td (ui/adapter Folder) Tj ET
+BT /F1 10 Tf 54 176 Td (Adapters connect RecyclerView data to XML row layouts.) Tj ET
+BT /F1 10 Tf 54 148 Td (BuildingAdapter.java renders each building row in the directory.) Tj ET
+BT /F1 10 Tf 54 120 Td (EventAdapter.java renders each campus event row.) Tj ET
+BT /F1 10 Tf 54 92 Td (HighlightAdapter.java renders dashboard highlight cards.) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 2940 >>
+stream
+BT /F1 14 Tf 54 760 Td (util Folder) Tj ET
+BT /F1 10 Tf 54 738 Td (Resource.java is a generic loading wrapper. It lets ViewModels report SUCCESS, ERROR, or) Tj ET
+BT /F1 10 Tf 54 724 Td (LOADING with optional data and messages.) Tj ET
+BT /F1 10 Tf 54 696 Td (AppExecutors.java provides background executors so database and network work do not block) Tj ET
+BT /F1 10 Tf 54 682 Td (the main UI thread.) Tj ET
+BT /F1 10 Tf 54 654 Td (SampleDataLoader.java reads bundled JSON files from the assets folder and converts them with) Tj ET
+BT /F1 10 Tf 54 640 Td (Gson.) Tj ET
+BT /F1 10 Tf 54 612 Td (PermissionHelper.java centralizes permission checks and request arrays for location,) Tj ET
+BT /F1 10 Tf 54 598 Td (Bluetooth, and notifications.) Tj ET
+BT /F1 10 Tf 54 570 Td (LocationHelper.java uses the fused location provider to get the current GPS position and) Tj ET
+BT /F1 10 Tf 54 556 Td (location updates.) Tj ET
+BT /F1 10 Tf 54 528 Td (RouteProvider.java is the routing coordinator. It first tries Google Directions API and) Tj ET
+BT /F1 10 Tf 54 514 Td (falls back to local graph routing when needed.) Tj ET
+BT /F1 10 Tf 54 486 Td (DirectionsRouteFetcher.java performs the HTTP request to Google Directions API using the) Tj ET
+BT /F1 10 Tf 54 472 Td (Maps API key from BuildConfig.) Tj ET
+BT /F1 10 Tf 54 444 Td (CampusRouteCalculator.java loads campus_graph.json and calculates routes on a local graph.) Tj ET
+BT /F1 10 Tf 54 430 Td (This allows navigation to still work when online directions are unavailable.) Tj ET
+BT /F1 10 Tf 54 402 Td (IndoorNavigationSimulator.java simulates BLE beacon behavior with hardcoded beacon nodes and) Tj ET
+BT /F1 10 Tf 54 388 Td (generated indoor route instructions.) Tj ET
+BT /F1 10 Tf 54 360 Td (NotificationHelper.java creates notification channels and displays event reminder or push) Tj ET
+BT /F1 10 Tf 54 346 Td (notification messages.) Tj ET
+BT /F1 14 Tf 54 304 Td (service and worker Folders) Tj ET
+BT /F1 10 Tf 54 282 Td (service/CampusMessagingService.java handles Firebase Cloud Messaging. When a push message) Tj ET
+BT /F1 10 Tf 54 268 Td (arrives, it creates a local notification through NotificationHelper.) Tj ET
+BT /F1 10 Tf 54 240 Td (worker/EventReminderWorker.java is used by WorkManager. It runs at scheduled times and shows) Tj ET
+BT /F1 10 Tf 54 226 Td (a reminder notification before a campus event.) Tj ET
+BT /F1 14 Tf 54 184 Td (assets Folder) Tj ET
+BT /F1 10 Tf 54 162 Td (app/src/main/assets/sample/buildings.json contains bundled sample building data. The app can) Tj ET
+BT /F1 10 Tf 54 148 Td (load this when Firestore is empty or unavailable.) Tj ET
+BT /F1 10 Tf 54 120 Td (app/src/main/assets/sample/events.json contains bundled sample event data.) Tj ET
+BT /F1 10 Tf 54 92 Td (app/src/main/assets/campus_graph.json contains nodes and edges for local route calculation.) Tj ET
+BT /F1 10 Tf 54 78 Td (CampusRouteCalculator uses this file for offline pathfinding.) Tj ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 3302 >>
+stream
+BT /F1 14 Tf 54 746 Td (res Folder) Tj ET
+BT /F1 10 Tf 54 724 Td (res/layout contains XML layouts for each screen and RecyclerView item. Examples include) Tj ET
+BT /F1 10 Tf 54 710 Td (activity_splash.xml, activity_auth.xml, activity_main.xml, fragment_dashboard.xml,) Tj ET
+BT /F1 10 Tf 54 696 Td (fragment_map.xml, fragment_directory.xml, fragment_events.xml, fragment_settings.xml,) Tj ET
+BT /F1 10 Tf 54 682 Td (fragment_indoor_navigation.xml, item_building.xml, item_event.xml, and item_highlight.xml.) Tj ET
+BT /F1 10 Tf 54 654 Td (res/values/strings.xml stores English UI text. res/values-am/strings.xml stores Amharic) Tj ET
+BT /F1 10 Tf 54 640 Td (translations.) Tj ET
+BT /F1 10 Tf 54 612 Td (res/values/colors.xml defines light theme colors. res/values-night/colors.xml defines dark) Tj ET
+BT /F1 10 Tf 54 598 Td (theme overrides.) Tj ET
+BT /F1 10 Tf 54 570 Td (res/values/themes.xml defines the Material DayNight app theme and splash theme.) Tj ET
+BT /F1 10 Tf 54 542 Td (res/drawable contains XML drawables and icons such as the splash background, map bottom) Tj ET
+BT /F1 10 Tf 54 528 Td (sheet background, indoor blue dot, and launcher foreground.) Tj ET
+BT /F1 10 Tf 54 500 Td (res/menu/bottom_nav_menu.xml defines the bottom navigation items: dashboard, map, directory,) Tj ET
+BT /F1 10 Tf 54 486 Td (events, and settings.) Tj ET
+BT /F1 10 Tf 54 458 Td (res/xml contains Android backup and data extraction rule files.) Tj ET
+BT /F1 14 Tf 54 416 Td (End-to-End App Flow) Tj ET
+BT /F1 10 Tf 54 394 Td (When the app launches, SplashActivity starts first. It waits briefly and checks Firebase) Tj ET
+BT /F1 10 Tf 54 380 Td (authentication state. If a user is already logged in, MainActivity opens. Otherwise,) Tj ET
+BT /F1 10 Tf 54 366 Td (AuthActivity opens.) Tj ET
+BT /F1 10 Tf 54 338 Td (AuthActivity lets the user sign in, register, or continue as a guest. After successful) Tj ET
+BT /F1 10 Tf 54 324 Td (authentication, the app opens MainActivity.) Tj ET
+BT /F1 10 Tf 54 296 Td (MainActivity requests needed runtime permissions and displays bottom navigation. Each tab) Tj ET
+BT /F1 10 Tf 54 282 Td (loads a Fragment.) Tj ET
+BT /F1 10 Tf 54 254 Td (Dashboard, Directory, Map, and Events use ViewModels. The ViewModels ask repositories to) Tj ET
+BT /F1 10 Tf 54 240 Td (sync data. Repositories load Firestore data into Room. The UI observes Room LiveData so) Tj ET
+BT /F1 10 Tf 54 226 Td (screens can update automatically and work offline after caching.) Tj ET
+BT /F1 10 Tf 54 198 Td (For outdoor navigation, MapFragment asks RouteProvider for a route. RouteProvider tries) Tj ET
+BT /F1 10 Tf 54 184 Td (Google Directions first. If that fails, CampusRouteCalculator uses campus_graph.json to) Tj ET
+BT /F1 10 Tf 54 170 Td (calculate a local walking route.) Tj ET
+BT /F1 10 Tf 54 142 Td (For indoor navigation, IndoorNavigationViewModel uses IndoorNavigationSimulator. It does not) Tj ET
+BT /F1 10 Tf 54 128 Td (use real BLE hardware yet. It cycles through fake beacons and generates demonstration route) Tj ET
+BT /F1 10 Tf 54 114 Td (steps.) Tj ET
+BT /F1 10 Tf 54 86 Td (For events, EventRepository syncs events, saves them to Room, and schedules reminder jobs.) Tj ET
+BT /F1 10 Tf 54 72 Td (EventReminderWorker later displays notifications. Firebase push messages are handled by) Tj ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 14 0 R >>
+endobj
+16 0 obj
+<< /Length 850 >>
+stream
+BT /F1 10 Tf 54 760 Td (CampusMessagingService.) Tj ET
+BT /F1 14 Tf 54 718 Td (Important Setup Notes) Tj ET
+BT /F1 10 Tf 54 696 Td (The project needs app/google-services.json for Firebase. This file is normally downloaded) Tj ET
+BT /F1 10 Tf 54 682 Td (from the Firebase console and is intentionally ignored by git.) Tj ET
+BT /F1 10 Tf 54 654 Td (The Maps API key in app/build.gradle should be replaced with a real key for Google Maps and) Tj ET
+BT /F1 10 Tf 54 640 Td (Directions API features.) Tj ET
+BT /F1 10 Tf 54 612 Td (Indoor navigation is currently simulated. Real BLE navigation would require scanning real) Tj ET
+BT /F1 10 Tf 54 598 Td (beacons, estimating distance, and mapping beacon positions to indoor coordinates.) Tj ET
+BT /F1 10 Tf 54 570 Td (There are no visible unit or instrumentation test folders in the current structure.) Tj ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 16 0 R >>
+endobj
+xref
+0 18
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000155 00000 n 
+0000000225 00000 n 
+0000003600 00000 n 
+0000003726 00000 n 
+0000007016 00000 n 
+0000007142 00000 n 
+0000010296 00000 n 
+0000010422 00000 n 
+0000013305 00000 n 
+0000013433 00000 n 
+0000016426 00000 n 
+0000016554 00000 n 
+0000019909 00000 n 
+0000020037 00000 n 
+0000020939 00000 n 
+trailer
+<< /Size 18 /Root 1 0 R >>
+startxref
+21067
+%%EOF
