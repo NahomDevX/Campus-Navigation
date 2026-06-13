@@ -1,13 +1,19 @@
 package com.example.campusnavigation.ui.main;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.campusnavigation.R;
 import com.example.campusnavigation.model.Building;
@@ -19,6 +25,7 @@ import com.example.campusnavigation.ui.indoor.IndoorNavigationFragment;
 import com.example.campusnavigation.ui.map.MapFragment;
 import com.example.campusnavigation.ui.settings.SettingsFragment;
 import com.example.campusnavigation.util.PermissionHelper;
+import com.example.campusnavigation.viewmodel.BuildingViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -56,7 +63,44 @@ public class MainActivity extends AppCompatActivity implements NavigationHost {
         if (savedInstanceState == null) {
             boolean openEvents = getIntent().getBooleanExtra("open_events", false);
             bottomNavigationView.setSelectedItemId(openEvents ? R.id.nav_events : R.id.nav_dashboard);
+            handleNavigationIntent(getIntent());
         }
+    }
+
+    @Override
+    protected void onNewIntent(@NonNull Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleNavigationIntent(intent);
+    }
+
+    private void handleNavigationIntent(@Nullable Intent intent) {
+        if (intent == null) {
+            return;
+        }
+        String destinationId = intent.getStringExtra("building_id");
+        if (destinationId == null) {
+            destinationId = intent.getStringExtra("destination_id");
+        }
+        Uri data = intent.getData();
+        if (destinationId == null && data != null) {
+            destinationId = data.getQueryParameter("building_id");
+            if (destinationId == null) {
+                destinationId = data.getQueryParameter("destination_id");
+            }
+        }
+        if (TextUtils.isEmpty(destinationId)) {
+            return;
+        }
+
+        BuildingViewModel buildingViewModel = new ViewModelProvider(this).get(BuildingViewModel.class);
+        buildingViewModel.findBuildingById(destinationId, building -> runOnUiThread(() -> {
+            if (building != null) {
+                openMapForBuilding(building, true);
+            } else {
+                Toast.makeText(this, R.string.destination_not_found, Toast.LENGTH_LONG).show();
+            }
+        }));
     }
 
     private void requestCorePermissions() {
@@ -109,8 +153,12 @@ public class MainActivity extends AppCompatActivity implements NavigationHost {
 
     @Override
     public void openMapForBuilding(Building building) {
+        openMapForBuilding(building, false);
+    }
+
+    private void openMapForBuilding(Building building, boolean startNavigation) {
         bottomNavigationView.setSelectedItemId(R.id.nav_map);
-        switchFragment(MapFragment.newInstance(building));
+        switchFragment(MapFragment.newInstance(building, startNavigation));
     }
 
     @Override
