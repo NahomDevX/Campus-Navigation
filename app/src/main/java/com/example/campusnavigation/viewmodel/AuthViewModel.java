@@ -17,23 +17,28 @@ public class AuthViewModel extends ViewModel {
     }
 
     public void signIn(String email, String password) {
-        authState.setValue(Resource.loading(false));
-        authRepository.signIn(email, password)
-                .addOnSuccessListener(result -> authState.setValue(Resource.success(true)))
-                .addOnFailureListener(error -> authState.setValue(Resource.error(error.getMessage(), false)));
+        authState.postValue(Resource.loading(false));
+        String error = authRepository.signIn(email, password);
+        postResult(error);
     }
 
     public void register(String email, String password) {
-        authState.setValue(Resource.loading(false));
-        authRepository.register(email, password)
-                .addOnSuccessListener(result -> authState.setValue(Resource.success(true)))
-                .addOnFailureListener(error -> authState.setValue(Resource.error(error.getMessage(), false)));
+        authState.postValue(Resource.loading(false));
+        String error = authRepository.register(email, password);
+        postResult(error);
     }
 
     public void continueAsGuest() {
-        authState.setValue(Resource.loading(false));
-        authRepository.signInAnonymously()
-                .addOnSuccessListener(result -> authState.setValue(Resource.success(true)))
-                .addOnFailureListener(error -> authState.setValue(Resource.error(error.getMessage(), false)));
+        authState.postValue(Resource.loading(false));
+        authRepository.signInAsGuest();
+        postResult(null);
+    }
+
+    private void postResult(String error) {
+        if (error == null) {
+            authState.postValue(Resource.success(true));
+        } else {
+            authState.postValue(Resource.error(error, false));
+        }
     }
 }
