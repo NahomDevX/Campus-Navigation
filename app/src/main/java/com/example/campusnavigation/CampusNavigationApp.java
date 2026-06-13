@@ -33,7 +33,7 @@ public class CampusNavigationApp extends Application {
                 ? AppCompatDelegate.MODE_NIGHT_YES
                 : AppCompatDelegate.MODE_NIGHT_NO);
         NotificationHelper.createChannels(this);
-        authRepository = new AuthRepository();
+        authRepository = new AuthRepository(this);
         buildingRepository = new BuildingRepository(this, database, preferencesRepository);
         eventRepository = new EventRepository(this, database, preferencesRepository);
     }
