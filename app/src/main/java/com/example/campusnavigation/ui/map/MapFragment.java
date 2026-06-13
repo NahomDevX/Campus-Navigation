@@ -59,6 +59,7 @@ import java.util.Set;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
     private static final String ARG_SELECTED_BUILDING_ID = "selected_building_id";
+    private static final String ARG_START_NAVIGATION = "start_navigation";
     private static final LatLng DIRE_DAWA_CAMPUS = new LatLng(9.620186228099227, 41.84080857019687);
     private static final float DEVIATION_THRESHOLD_METERS = 35f;
     private static final float WALKING_SPEED_METERS_PER_MINUTE = 70f;
@@ -103,6 +104,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private boolean pendingDirectoryFocus = false;
     private boolean isNavigating = false;
     private boolean isRerouting = false;
+    private boolean autoStartNavigation = false;
+    private boolean autoNavigationHandled = false;
     private List<LatLng> activeRoute = new ArrayList<>();
     private LatLng navigationDestination;
     private PendingLocationAction pendingLocationAction = PendingLocationAction.NONE;
@@ -118,12 +121,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             });
 
     public static MapFragment newInstance(@Nullable Building building) {
+        return newInstance(building, false);
+    }
+
+    public static MapFragment newInstance(@Nullable Building building, boolean startNavigation) {
         MapFragment fragment = new MapFragment();
+        Bundle args = new Bundle();
         if (building != null) {
-            Bundle args = new Bundle();
             args.putString(ARG_SELECTED_BUILDING_ID, building.getId());
-            fragment.setArguments(args);
         }
+        args.putBoolean(ARG_START_NAVIGATION, startNavigation);
+        fragment.setArguments(args);
         return fragment;
     }
 
@@ -136,6 +144,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         rootView = view;
+        if (getArguments() != null) {
+            autoStartNavigation = getArguments().getBoolean(ARG_START_NAVIGATION, false);
+        }
         searchBar = view.findViewById(R.id.mapSearchBar);
         defaultUiContainer = view.findViewById(R.id.defaultUiContainer);
         navigationUiContainer = view.findViewById(R.id.navigationUiContainer);
@@ -309,13 +320,26 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             Object tag = marker.getTag();
             if (tag instanceof Building) {
                 focusOnBuilding((Building) tag, true);
+                marker.showInfoWindow();
                 return true;
             }
             if (tag instanceof CampusEvent) {
                 navigateToEvent((CampusEvent) tag);
+                marker.showInfoWindow();
                 return true;
             }
             return false;
+        });
+
+        googleMap.setOnInfoWindowClickListener(marker -> {
+            Object tag = marker.getTag();
+            if (tag instanceof Building) {
+                selectedBuilding = (Building) tag;
+                startNavigationMode();
+            } else if (tag instanceof CampusEvent) {
+                navigateToEvent((CampusEvent) tag);
+                startNavigationMode();
+            }
         });
 
         myLocationFab.setVisibility(View.VISIBLE);
@@ -409,7 +433,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             boolean animate = pendingDirectoryFocus;
             pendingDirectoryFocus = false;
             showBuildingDetails(selectedBuilding, animate);
+            maybeStartAutoNavigation();
         }
+    }
+
+    private void maybeStartAutoNavigation() {
+        if (!autoStartNavigation || autoNavigationHandled || isNavigating
+                || googleMap == null || selectedBuilding == null) {
+            return;
+        }
+        autoNavigationHandled = true;
+        startNavigationMode();
     }
 
     private boolean matchesFilter(String buildingType) {
