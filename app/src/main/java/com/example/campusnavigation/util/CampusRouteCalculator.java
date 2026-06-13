@@ -71,8 +71,21 @@ public class CampusRouteCalculator {
         }
     }
 
+    private static class EdgeSnap {
+        final LatLng projection;
+        final String entryNodeId;
+        final double distance;
+
+        EdgeSnap(LatLng projection, String entryNodeId, double distance) {
+            this.projection = projection;
+            this.entryNodeId = entryNodeId;
+            this.distance = distance;
+        }
+    }
+
     private final Map<String, GraphNode> nodesById = new HashMap<>();
     private final Map<String, List<Neighbor>> adjacency = new HashMap<>();
+    private final List<GraphEdge> edgeList = new ArrayList<>();
 
     public CampusRouteCalculator(Context context) {
         loadGraph(context);
@@ -98,6 +111,7 @@ public class CampusRouteCalculator {
                 double distance = distanceBetween(from.lat, from.lng, to.lat, to.lng);
                 adjacency.get(edge.from).add(new Neighbor(edge.to, distance));
                 adjacency.get(edge.to).add(new Neighbor(edge.from, distance));
+                edgeList.add(edge);
             }
         } catch (Exception ignored) {
             // Graph unavailable; caller falls back to direct segment.
@@ -109,8 +123,13 @@ public class CampusRouteCalculator {
             return directRoute(start, end);
         }
 
-        String startNodeId = nearestNodeId(start);
-        String endNodeId = nearestNodeId(end);
+        // Snap the endpoints onto the nearest walkway segment so the connecting
+        // legs run along the path network instead of cutting across buildings.
+        EdgeSnap startSnap = nearestEdgeSnap(start);
+        EdgeSnap endSnap = nearestEdgeSnap(end);
+
+        String startNodeId = startSnap != null ? startSnap.entryNodeId : nearestNodeId(start);
+        String endNodeId = endSnap != null ? endSnap.entryNodeId : nearestNodeId(end);
         if (startNodeId == null || endNodeId == null) {
             return directRoute(start, end);
         }
@@ -121,16 +140,55 @@ public class CampusRouteCalculator {
         }
 
         List<LatLng> path = new ArrayList<>();
-        path.add(start);
+        addPoint(path, start);
+        if (startSnap != null) {
+            addPoint(path, startSnap.projection);
+        }
         for (String nodeId : nodePath) {
             GraphNode node = nodesById.get(nodeId);
             if (node != null) {
-                path.add(new LatLng(node.lat, node.lng));
+                addPoint(path, new LatLng(node.lat, node.lng));
             }
         }
-        path.add(end);
+        if (endSnap != null) {
+            addPoint(path, endSnap.projection);
+        }
+        addPoint(path, end);
 
         return new RouteResult(path, pathDistance(path));
+    }
+
+    private static void addPoint(List<LatLng> path, LatLng point) {
+        if (path.isEmpty()) {
+            path.add(point);
+            return;
+        }
+        LatLng last = path.get(path.size() - 1);
+        if (distanceBetween(last, point) > 0.5d) {
+            path.add(point);
+        }
+    }
+
+    private EdgeSnap nearestEdgeSnap(LatLng point) {
+        EdgeSnap best = null;
+        for (GraphEdge edge : edgeList) {
+            GraphNode a = nodesById.get(edge.from);
+            GraphNode b = nodesById.get(edge.to);
+            if (a == null || b == null) {
+                continue;
+            }
+            LatLng pa = new LatLng(a.lat, a.lng);
+            LatLng pb = new LatLng(b.lat, b.lng);
+            LatLng projection = projectOnSegment(point, pa, pb);
+            double distance = distanceBetween(point, projection);
+            if (best == null || distance < best.distance) {
+                String entry = distanceBetween(projection, pa) <= distanceBetween(projection, pb)
+                        ? edge.from
+                        : edge.to;
+                best = new EdgeSnap(projection, entry, distance);
+            }
+        }
+        return best;
     }
 
     public static double distanceToPolyline(LatLng point, List<LatLng> polyline) {
@@ -279,19 +337,21 @@ public class CampusRouteCalculator {
     }
 
     private static double distanceToSegment(LatLng point, LatLng start, LatLng end) {
-        double segmentLength = distanceBetween(start, end);
-        if (segmentLength == 0d) {
-            return distanceBetween(point, start);
+        return distanceBetween(point, projectOnSegment(point, start, end));
+    }
+
+    private static LatLng projectOnSegment(LatLng point, LatLng start, LatLng end) {
+        double dLat = end.latitude - start.latitude;
+        double dLng = end.longitude - start.longitude;
+        double denominator = dLat * dLat + dLng * dLng;
+        if (denominator == 0d) {
+            return start;
         }
 
-        double t = ((point.latitude - start.latitude) * (end.latitude - start.latitude)
-                + (point.longitude - start.longitude) * (end.longitude - start.longitude))
-                / (segmentLength * segmentLength);
+        double t = ((point.latitude - start.latitude) * dLat
+                + (point.longitude - start.longitude) * dLng) / denominator;
         t = Math.max(0d, Math.min(1d, t));
 
-        LatLng projection = new LatLng(
-                start.latitude + t * (end.latitude - start.latitude),
-                start.longitude + t * (end.longitude - start.longitude));
-        return distanceBetween(point, projection);
+        return new LatLng(start.latitude + t * dLat, start.longitude + t * dLng);
     }
 }
